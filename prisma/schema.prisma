@@ -1,0 +1,153 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                    String         @id @default(uuid())
+  username              String         @unique
+  email                 String         @unique
+  password              String
+  phoneNumber           String
+  role                  Role           @default(Client)
+  passResetCode         String?        @default("")
+  passResetCodeEat      DateTime?
+  passResetCodeVerified Boolean?       @default(false)
+  Events                Event[]        @relation("EventOrganizer")
+  Booking               Booking[]
+  Payment               Payment[]
+  Review                Review[]
+  Notification          Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([id, email])
+}
+
+enum Role {
+  ADMIN
+  Client
+  ORGANIZER
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  location    String
+  userId      String
+  categoryId  String
+
+  Venue    Venue[]    @relation("VenueEvents")
+  Booking  Booking[]
+  Review   Review[]
+  User     User       @relation("EventOrganizer", fields: [userId], references: [id])
+  Category Category[] @relation("EventCategories")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([id])
+}
+
+model Category {
+  id     String  @id @default(uuid())
+  name   String  @unique
+  Events Event[] @relation("EventCategories")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Venue {
+  id       String  @id @default(uuid())
+  name     String  @unique
+  address  String  @unique
+  capacity Int
+  Events   Event[] @relation("VenueEvents")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([id, address])
+}
+
+model Booking {
+  id      String        @id @default(uuid())
+  userId  String
+  eventId String
+  status  BookingStatus @default(PENDING)
+
+  User    User      @relation(fields: [userId], references: [id])
+  Event   Event     @relation(fields: [eventId], references: [id])
+  Payment Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([id])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  amount    Float
+  method    PaymentMethod
+  userId    String
+  bookingId String
+
+  User    User    @relation(fields: [userId], references: [id])
+  Booking Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+}
+
+model Review {
+  id      String  @id @default(uuid())
+  rating  Int     @default(1) // Can range from 1-5
+  comment String?
+  userId  String
+  eventId String
+
+  User  User  @relation(fields: [userId], references: [id])
+  Event Event @relation(fields: [eventId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([id])
+}
+
+model Notification {
+  id          String  @id @default(uuid())
+  message     String
+  isRead      Boolean @default(false)
+  recipientId String
+
+  Recipient User @relation(fields: [recipientId], references: [id])
+
+  createdAt DateTime @default(now())
+}
