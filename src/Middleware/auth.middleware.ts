@@ -94,10 +94,10 @@ export const allowedTo =
 
     const user = req.user;
     if (!user) {
-      throw next(new ApiError("Access Denied - No user found", 403));
+      return next(new ApiError("Access Denied - No user found", 403));
     }
     if (!roles.includes(user.role))
-      throw next(new ApiError("Access Denied - Admin Only", 403));
+      return next(new ApiError("Access Denied - Admin Only", 403));
 
     next();
   };

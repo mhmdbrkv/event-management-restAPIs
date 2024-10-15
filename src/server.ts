@@ -28,8 +28,8 @@ const server = app.listen(port, () => {
 });
 
 // Handling Rejections Outside Express
-process.on("unhandledRejection", (err: Error) => {
-  console.error("Unhandled Rejection at:", err.name, err.message);
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection at:", err);
   server.close(() => {
     console.error("Shuttinf Down...");
     process.exit(1);
