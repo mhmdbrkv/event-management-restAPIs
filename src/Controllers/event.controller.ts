@@ -9,11 +9,11 @@ export const getAllEvents = async (
   next: NextFunction
 ) => {
   try {
-    const allEvets = await Event.findMany({});
+    const allEvents = await Event.findMany({});
     res.status(200).json({
       status: "success",
-      results: allEvets.length,
-      data: allEvets,
+      results: allEvents.length,
+      data: allEvents,
     });
   } catch (error) {
     console.error("getAllEvents error", error);

@@ -15,12 +15,12 @@ router.use(guard);
 
 router
   .route("/")
-  .get(allowedTo("ADMIN"), getAllEvents)
+  .get(getAllEvents)
   .post(allowedTo("ORGANIZER", "ADMIN"), createEvent);
 
 router
   .route("/:id")
-  .get(allowedTo("ADMIN"), getOneEvent)
+  .get(getOneEvent)
   .put(allowedTo("ORGANIZER", "ADMIN"), updateEvent)
   .delete(allowedTo("ORGANIZER", "ADMIN"), deleteEvent);
 
