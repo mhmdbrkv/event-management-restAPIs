@@ -15,23 +15,24 @@ export const signupValidator = [
     .notEmpty()
     .withMessage("User email is required")
     .isEmail()
-    .withMessage("User email is required as a valid email format"),
+    .withMessage("User email is required as a valid email format")
+    .trim()
+    .normalizeEmail(),
 
   check("password")
     .notEmpty()
-    .withMessage("User password is required")
-    .isLength({ min: 8 })
-    .withMessage("User password length must be more than 8 characters")
-    .custom(async (value, { req }) => {
-      let regex = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
-      if (!regex.test(value)) {
-        throw new ApiError(
-          "Password must contain 8 characters and at least one number, one letter and one unique character such as !#$%&? ",
-          400
-        );
-      }
-      return true;
-    }),
+    .withMessage("Password is required")
+    .isStrongPassword({
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+    .withMessage(
+      "Password isn't strong enough. It must contain at least 8 characters, including uppercase, lowercase, number, and special character."
+    )
+    .trim(), // Removes extra spaces
 
   check("phoneNumber").notEmpty().withMessage("User phoneNumber is required"),
   validatorMiddleware,
@@ -42,22 +43,24 @@ export const loginValidator = [
     .notEmpty()
     .withMessage("User email is required")
     .isEmail()
-    .withMessage("User email is required as a valid email format"),
+    .withMessage("User email is required as a valid email format")
+    .trim()
+    .normalizeEmail(),
+
   check("password")
     .notEmpty()
-    .withMessage("User password is required")
-    .isLength({ min: 8 })
-    .withMessage("User password length must be more than 8 characters")
-    .custom(async (value, { req }) => {
-      let regex = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
-      if (!regex.test(value)) {
-        throw new ApiError(
-          "Password must contain 8 characters and at least one number, one letter and one unique character such as !#$%&? ",
-          400
-        );
-      }
-      return true;
-    }),
+    .withMessage("Password is required")
+    .isStrongPassword({
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+    .withMessage(
+      "Password isn't strong enough. It must contain at least 8 characters, including uppercase, lowercase, number, and special character."
+    )
+    .trim(), // Removes extra spaces
 
   validatorMiddleware,
 ];
@@ -65,19 +68,18 @@ export const loginValidator = [
 export const newPasswordValidator = [
   check("newPassword")
     .notEmpty()
-    .withMessage("newPassword is required")
-    .isLength({ min: 8 })
-    .withMessage("Password length must be more than 8 characters")
-    .custom(async (value, { req }) => {
-      let regex = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
-      if (!regex.test(value)) {
-        throw new ApiError(
-          "Password must contain 8 characters and at least one number, one letter and one unique character such as !#$%&? ",
-          400
-        );
-      }
-      return true;
-    }),
+    .withMessage("Password is required")
+    .isStrongPassword({
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+    .withMessage(
+      "Password isn't strong enough. It must contain at least 8 characters, including uppercase, lowercase, number, and special character."
+    )
+    .trim(), // Removes extra spaces
 
   validatorMiddleware,
 ];

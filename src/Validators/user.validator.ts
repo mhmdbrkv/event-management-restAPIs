@@ -22,22 +22,23 @@ export const updateUserValidator = [
   check("email")
     .optional()
     .isEmail()
-    .withMessage("User email is required as a valid email format"),
+    .withMessage("User email is required as a valid email format")
+    .trim()
+    .normalizeEmail(),
 
   check("password")
     .optional()
-    .isLength({ min: 8 })
-    .withMessage("User password length must be more than 8 characters")
-    .custom(async (value, { req }) => {
-      let regex = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
-      if (!regex.test(value)) {
-        throw new ApiError(
-          "Password must contain 8 characters and at least one number, one letter and one unique character such as !#$%&? ",
-          400
-        );
-      }
-      return true;
-    }),
+    .isStrongPassword({
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+    .withMessage(
+      "Password isn't strong enough. It must contain at least 8 characters, including uppercase, lowercase, number, and special character."
+    )
+    .trim(), // Removes extra spaces
 
   check("phoneNumber").optional(),
   validatorMiddleware,
@@ -60,19 +61,18 @@ export const changePasswordValidator = [
 
   check("newPassword")
     .notEmpty()
-    .withMessage("User new password is required")
-    .isLength({ min: 8 })
-    .withMessage("User password length must be more than 8 characters")
-    .custom(async (value, { req }) => {
-      let regex = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/;
-      if (!regex.test(value)) {
-        throw new ApiError(
-          "Password must contain 8 characters and at least one number, one letter and one unique character such as !#$%&? ",
-          400
-        );
-      }
-      return true;
-    }),
+    .withMessage("Password is required")
+    .isStrongPassword({
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+    .withMessage(
+      "Password isn't strong enough. It must contain at least 8 characters, including uppercase, lowercase, number, and special character."
+    )
+    .trim(), // Removes extra spaces
 
   validatorMiddleware,
 ];

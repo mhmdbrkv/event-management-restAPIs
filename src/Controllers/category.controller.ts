@@ -1,6 +1,7 @@
 import ApiError from "../Utils/apiError.js";
 import { PrismaClient, Category } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
+import redis from "../Utils/redis.js";
 const Category = new PrismaClient().category;
 
 export const getAllCategories = async (
@@ -9,13 +10,25 @@ export const getAllCategories = async (
   next: NextFunction
 ) => {
   try {
-    const allCategories = await Category.findMany({});
+    // get stored categories from redis for quick access
+    let cachedCategories = await redis.get("categories");
 
-    res.status(200).json({
-      status: "success",
-      results: allCategories.length,
-      data: allCategories,
-    });
+    if (cachedCategories) {
+      res
+        .status(200)
+        .json({ status: "success", data: JSON.parse(cachedCategories) });
+    } else {
+      const allCategories = await Category.findMany({});
+
+      // store in redis for quick access
+      await redis.set("categories", JSON.stringify(allCategories));
+
+      res.status(200).json({
+        status: "success",
+        results: allCategories.length,
+        data: allCategories,
+      });
+    }
   } catch (error) {
     console.error("getAllCategories error", error);
     return next(new ApiError("getAllCategories", 500));
