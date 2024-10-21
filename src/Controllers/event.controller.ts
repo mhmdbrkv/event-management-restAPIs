@@ -1,6 +1,7 @@
 import ApiError from "../Utils/apiError.js";
 import { PrismaClient, Event } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
+import ApiFeatures from "../Utils/apiFeatures.js";
 const Event = new PrismaClient().event;
 
 export const getAllEvents = async (
@@ -9,15 +10,46 @@ export const getAllEvents = async (
   next: NextFunction
 ) => {
   try {
-    const allEvents = await Event.findMany({});
+    // Instantiate the ApiFeatures class and apply features
+    const apiFeatures = new ApiFeatures(req.query);
+    const { queryObj, pagination } = apiFeatures.applyFeatures(req.query);
+
+    // Fetch total number of documents for pagination
+    const numOfDocuments = await Event.count({
+      where: queryObj.where,
+    });
+
+    // Fetch events based on the built query object
+    const allEvents = await Event.findMany(queryObj);
+
+    // Pagination result
+    const paginationResults = {
+      ...pagination,
+      totalPages: 0,
+      next: 0,
+      prev: 0,
+    };
+
+    paginationResults.totalPages = Math.ceil(
+      numOfDocuments / paginationResults.limit
+    );
+    if (paginationResults.currentPage < paginationResults.totalPages) {
+      paginationResults.next = paginationResults.currentPage + 1;
+    }
+    if (paginationResults.currentPage > 1) {
+      paginationResults.prev = paginationResults.currentPage - 1;
+    }
+
+    // Send response with event data
     res.status(200).json({
       status: "success",
       results: allEvents.length,
+      paginationResults,
       data: allEvents,
     });
   } catch (error) {
     console.error("getAllEvents error", error);
-    return next(new ApiError("getAllEvents", 500));
+    return next(new ApiError("Error fetching events", 500));
   }
 };
 
@@ -27,7 +59,6 @@ export const createEvent = async (
   next: NextFunction
 ) => {
   try {
-    req.body.date = new Date(req.body.date).toISOString();
     const newEvent = await Event.create({
       data: req.body as Event,
     });
@@ -54,11 +85,11 @@ export const getOneEvent = async (
       where: { id },
 
       include: {
-        User: true,
+        Organizer: true,
         Category: true,
-        Review: true,
-        Venue: true,
-        Booking: true,
+        Reviews: true,
+        Attendees: true,
+        Tickets: true,
       },
     });
     res.status(200).json({ status: "success", data: event });

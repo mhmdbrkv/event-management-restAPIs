@@ -1,5 +1,5 @@
 import express from "express";
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 import {
   getAllReviews,
@@ -8,17 +8,27 @@ import {
   updateReviewData,
   removeReview,
 } from "../Controllers/review.controller.js";
+import {
+  uuidValidator,
+  getAllReviewsValidator,
+  createReviewValidator,
+  updateReviewValidator,
+} from "../Validators/review.validator.js";
 
 import { guard, allowedTo } from "../Middleware/auth.middleware.js";
+import { filterObj } from "../Middleware/nestedRoute.middleware.js";
 
 router.use(guard);
 
-router.route("/").get(getAllReviews).post(allowedTo("Client"), createReview);
+router
+  .route("/")
+  .get(filterObj, getAllReviewsValidator, getAllReviews)
+  .post(allowedTo("USER"), createReviewValidator, createReview);
 
 router
   .route("/:id")
-  .get(getOneReview)
-  .put(allowedTo("ADMIN", "Client"), updateReviewData)
-  .delete(allowedTo("ADMIN", "Client"), removeReview);
+  .get(allowedTo("ADMIN"), uuidValidator, getOneReview)
+  .put(allowedTo("USER"), updateReviewValidator, updateReviewData)
+  .delete(allowedTo("ADMIN", "USER"), uuidValidator, removeReview);
 
 export default router;

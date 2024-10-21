@@ -60,8 +60,10 @@ export const guard = async (
         email: true,
         phoneNumber: true,
         role: true,
-        createdAt: true,
-        updatedAt: true,
+        Events: true,
+        AttendEvent: true,
+        Reviews: true,
+        Tickets: true,
         password: false,
       },
     });
@@ -71,7 +73,7 @@ export const guard = async (
     }
 
     // 5) Attach the user to the request object for future middleware or routes
-    req.user = loggedUser as User;
+    req.user = loggedUser as unknown as User;
 
     // 6) Continue to the next middleware or route handler
     next();
@@ -91,11 +93,11 @@ export const allowedTo =
   (...roles: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     // 1) Get the user from the request object
-
     const user = req.user;
     if (!user) {
       return next(new ApiError("Access Denied - No user found", 403));
     }
+
     if (!roles.includes(user.role))
       return next(new ApiError("Access Denied - Admin Only", 403));
 

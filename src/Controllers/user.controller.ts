@@ -14,15 +14,11 @@ export const getLoggedUser = async (
 
     const user = await User.findUnique({
       where: { id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        phoneNumber: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        password: false,
+      include: {
+        Events: true,
+        AttendEvent: true,
+        Reviews: true,
+        Tickets: true,
       },
     });
 
@@ -40,6 +36,12 @@ export const updateLoggedUser = async (
 ) => {
   try {
     const { id, username, email, phoneNumber, password } = req.user as User;
+
+    const emailExists = await User.findUnique({ where: { email } });
+
+    if (emailExists) {
+      throw new ApiError("User email is unavilable", 400);
+    }
 
     const updatedUser = await User.update({
       where: { id },

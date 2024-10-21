@@ -9,7 +9,7 @@ export const getAllReviews = async (
   next: NextFunction
 ) => {
   try {
-    const allReviews = await Review.findMany({});
+    const allReviews = await Review.findMany(req.filterObj);
 
     res.status(200).json({
       status: "success",
@@ -57,6 +57,10 @@ export const getOneReview = async (
         Event: true,
       },
     });
+
+    if (!review) {
+      throw next(new ApiError(`No review found with id ${id}`, 404));
+    }
 
     res.status(200).json({ status: "success", data: review });
   } catch (error) {

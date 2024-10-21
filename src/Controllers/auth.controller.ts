@@ -214,60 +214,65 @@ export const forgotPassword = async (
   res: Response,
   next: NextFunction
 ) => {
-  // Check user
-  const user = req.user;
-  if (!user) {
-    throw new ApiError("No logged user found", 500);
-  }
-  // generate reset code
-  const random = Math.floor(100000 + Math.random() * 900000).toString();
-  const resetCode = crypto.createHash("sha256").update(random).digest("hex");
-
-  // 3) Save the reset code in the database
-  const updatedUser = await prisma.user.update({
-    where: {
-      id: user?.id,
-    },
-    data: {
-      passResetCode: resetCode,
-      passResetCodeEat: `${Date.now() + 10 * 60 * 1000}`,
-      passResetCodeVerified: false,
-    },
-  });
-
-  if (!user) {
-    throw next(new ApiError("Invalid email or password", 404));
-  }
-
-  // Email Options
-  const options = {
-    email: user.email,
-    subject: `Password reset code (valid for 10 mins)`,
-    message: `Hi ${user.username},\nWe sent the code ${resetCode} to reset your password.\n\nThe Baraka Limited family`,
-  };
-
-  // Sending Email
   try {
-    await sendEmail(options);
-  } catch (err) {
-    await prisma.user.update({
+    // Check user
+    const user = req.user;
+    if (!user) {
+      throw new ApiError("No logged user found", 500);
+    }
+    // generate reset code
+    const random = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetCode = crypto.createHash("sha256").update(random).digest("hex");
+
+    // 3) Save the reset code in the database
+    const date = new Date();
+    const futureDate = new Date(date.getTime() + 10 * 60000); // Adding 10 minutes (60000 ms = 1 minute)
+    const futureISOString = futureDate.toISOString();
+
+    const updatedUser = await prisma.user.update({
       where: {
         id: user?.id,
       },
       data: {
-        passResetCode: undefined,
-        passResetCodeEat: undefined,
+        passResetCode: resetCode,
+        passResetCodeEat: futureISOString,
         passResetCodeVerified: false,
       },
     });
 
-    throw next(new ApiError(`${err}`, 500));
-  }
+    // Email Options
+    const options = {
+      email: user.email,
+      subject: `Password reset code (valid for 10 mins)`,
+      message: `Hi ${user.username},\nWe sent the code ${random} to reset your password.\n\nThe Baraka Limited family`,
+    };
 
-  res.status(200).json({
-    status: "success",
-    message: `Reset Code was sent successfully to ${user.email}`,
-  });
+    // Sending Email
+    try {
+      await sendEmail(options);
+    } catch (err) {
+      await prisma.user.update({
+        where: {
+          id: user?.id,
+        },
+        data: {
+          passResetCode: undefined,
+          passResetCodeEat: undefined,
+          passResetCodeVerified: false,
+        },
+      });
+
+      throw next(new ApiError(`${err}`, 500));
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: `Reset Code was sent successfully to ${user.email}`,
+    });
+  } catch (error) {
+    console.error("forgotPassword");
+    throw next(new ApiError(`${error}`, 500));
+  }
 };
 
 // verifyResetCode
@@ -276,28 +281,36 @@ export const verifyResetCode = async (
   res: Response,
   next: NextFunction
 ) => {
-  const code = crypto
-    .createHash("sha256")
-    .update(req.body.resetCode)
-    .digest("hex");
+  try {
+    const code = crypto
+      .createHash("sha256")
+      .update(req.body.resetCode)
+      .digest("hex");
 
-  const user = await prisma.user.findFirst({
-    where: {
-      passResetCode: code,
-      passResetCodeEat: { gt: `${Date.now()}` },
-    },
-  });
+    const date = new Date().toISOString();
 
-  if (!user) throw new ApiError("Invalid or expired password reset code", 400);
+    const user = await prisma.user.findFirst({
+      where: {
+        passResetCode: code,
+        passResetCodeEat: { gt: `${date}` },
+      },
+    });
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { passResetCodeVerified: true },
-  });
+    if (!user)
+      throw new ApiError("Invalid or expired password reset code", 400);
 
-  res
-    .status(200)
-    .json({ success: true, message: "Password reset code is verified" });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passResetCodeVerified: true },
+    });
+
+    res
+      .status(200)
+      .json({ success: true, message: "Password reset code is verified" });
+  } catch (error) {
+    console.error("verifyResetCode error");
+    throw next(new ApiError(`${error}`, 500));
+  }
 };
 
 // resetPassword
@@ -306,34 +319,43 @@ export const resetPassword = async (
   res: Response,
   next: NextFunction
 ) => {
-  const user = req.user as User;
-  if (!user) throw new ApiError("No logged user found.", 404);
+  try {
+    const user = req.user as User;
+    if (!user) throw new ApiError("No logged user found.", 404);
 
-  if (!user.passResetCodeVerified)
-    throw new ApiError(
-      "Please verify your password with reset code first.",
-      400
-    );
+    let userFullData = await prisma.user.findUnique({ where: { id: user.id } });
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      password: await bcrypt.hash(req.body.newPassword, 10),
-      passResetCode: undefined,
-      passResetCodeEat: undefined,
-      passResetCodeVerified: false,
-    },
-  });
+    if (!userFullData) throw new ApiError("No logged user Full Data.", 404);
 
-  //generate the jwt
-  const accessToken = generateAccessToken(user.id);
+    if (!userFullData.passResetCodeVerified)
+      throw new ApiError(
+        "Please verify your password with reset code first.",
+        400
+      );
 
-  // set cookie
-  setAccessTokenCookie(res, accessToken);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: await bcrypt.hash(req.body.newPassword, 10),
+        passResetCode: undefined,
+        passResetCodeEat: undefined,
+        passResetCodeVerified: false,
+      },
+    });
 
-  res.status(200).json({
-    status: "success",
-    message: "Password has been reseted successfully.",
-    token: accessToken,
-  });
+    //generate the jwt
+    const accessToken = generateAccessToken(user.id);
+
+    // set cookie
+    setAccessTokenCookie(res, accessToken);
+
+    res.status(200).json({
+      status: "success",
+      message: "Password has been reseted successfully.",
+      token: accessToken,
+    });
+  } catch (error) {
+    console.error("resetPassword error");
+    throw next(new ApiError(`${error}`, 500));
+  }
 };

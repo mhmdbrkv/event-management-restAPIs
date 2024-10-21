@@ -28,6 +28,14 @@ export const createCategory = async (
   next: NextFunction
 ) => {
   try {
+    const category = await Category.findUnique({
+      where: { name: req.body.name },
+    });
+
+    if (category) {
+      throw new ApiError(`Category already exists`, 400);
+    }
+
     const newCategory = await Category.create({
       data: req.body as Category,
     });
@@ -70,6 +78,14 @@ export const updateCategory = async (
 ) => {
   try {
     const { id } = req.params;
+
+    const category = await Category.findUnique({
+      where: { id },
+    });
+
+    if (!category) {
+      throw new ApiError(`No category found with id: ${id}`, 400);
+    }
 
     const updatedCategory = await Category.update({
       where: { id },
