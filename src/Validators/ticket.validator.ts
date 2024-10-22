@@ -37,13 +37,23 @@ export const createTicketValidator = [
   check("type")
     .notEmpty()
     .withMessage("Ticket type is required")
-    .custom((value) => {
+    .custom(async (value) => {
       if (!["GENERAL_ADMISSION", "VIP", "RESERVED_SEATING"].includes(value)) {
         throw new ApiError(
           `Ticket type not found. Available types: ["GENERAL_ADMISSION", "VIP", "RESERVED_SEATING"]`,
           404
         );
       }
+      const ticket = await Ticket.findFirst({
+        where: {
+          type: value,
+        },
+      });
+
+      if (ticket) {
+        throw new ApiError(`Ticket already exists with the same type`, 404);
+      }
+
       return true;
     }),
 
