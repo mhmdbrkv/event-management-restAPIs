@@ -14,7 +14,6 @@ export const uuidValidator = [
       const ticket = await Ticket.findFirst({
         where: {
           id: value,
-          userId: req.user.id,
         },
       });
       if (!ticket) {

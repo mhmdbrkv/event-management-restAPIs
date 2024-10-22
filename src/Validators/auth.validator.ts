@@ -1,6 +1,5 @@
 import { check } from "express-validator";
 import validatorMiddleware from "../Middleware/validation.middleware.js";
-import ApiError from "../Utils/apiError.js";
 
 export const signupValidator = [
   check("username")

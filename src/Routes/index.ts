@@ -5,6 +5,7 @@ import eventRoutes from "./event.route.js";
 import categoryRoutes from "./category.route.js";
 import reviewRoutes from "./review.route.js";
 import ticketRoutes from "./ticket.route.js";
+import paymentRoutes from "./payment.route.js";
 import { guard } from "../Middleware/auth.middleware.js";
 
 export default (app: Express) => {
@@ -14,6 +15,7 @@ export default (app: Express) => {
   app.use("/api/categories", categoryRoutes);
   app.use("/api/reviews", reviewRoutes);
   app.use("/api/tickets", ticketRoutes);
+  app.use("/api/payments", paymentRoutes);
 
   // Nested Route: Get All Events for Specific Category
   app.use("/api/categories/:categoryId/events", guard, eventRoutes);

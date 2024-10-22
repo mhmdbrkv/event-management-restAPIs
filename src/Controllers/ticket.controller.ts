@@ -53,7 +53,7 @@ export const getOneTicket = async (
 
     const ticket = await Prisma.ticket.findUnique({
       where: { id },
-      include: { Event: true, User: true },
+      include: { Event: true, Users: true },
     });
 
     res.status(200).json({
