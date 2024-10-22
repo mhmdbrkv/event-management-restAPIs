@@ -37,7 +37,7 @@ export const createTicketValidator = [
   check("type")
     .notEmpty()
     .withMessage("Ticket type is required")
-    .custom(async (value) => {
+    .custom(async (value, { req }) => {
       if (!["GENERAL_ADMISSION", "VIP", "RESERVED_SEATING"].includes(value)) {
         throw new ApiError(
           `Ticket type not found. Available types: ["GENERAL_ADMISSION", "VIP", "RESERVED_SEATING"]`,
@@ -47,6 +47,7 @@ export const createTicketValidator = [
       const ticket = await Ticket.findFirst({
         where: {
           type: value,
+          eventId: req.body.eventId,
         },
       });
 

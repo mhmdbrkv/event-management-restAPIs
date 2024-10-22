@@ -47,8 +47,9 @@ export const createEventValidator = [
     .isURL()
     .withMessage("Location must be a valid URL")
     .custom((value) => {
-      // Check if the URL is a valid Google Maps link
-      const googleMapsRegex = /^(https:\/\/)?(www\.)?google\.[a-z]+\/maps/;
+      // Check if the URL is a valid Google Maps link (full or shortened)
+      const googleMapsRegex =
+        /^(https:\/\/)?(www\.)?(google\.[a-z]+\/maps|maps\.app\.goo\.gl)/;
       if (!googleMapsRegex.test(value)) {
         throw new ApiError("Location must be a valid Google Maps link", 400);
       }
@@ -86,10 +87,7 @@ export const createEventValidator = [
     .notEmpty()
     .withMessage("Date is required")
     .isISO8601()
-    .withMessage("Date must be in a valid ISO 8601 format (e.g., YYYY-MM-DD)")
-    .custom((value, { req }) => {
-      req.body.date = new Date(value).toISOString();
-    }),
+    .withMessage("Date must be in a valid ISO 8601 format (e.g., YYYY-MM-DD)"),
 
   check("ticketsQuantity")
     .notEmpty()
@@ -98,15 +96,22 @@ export const createEventValidator = [
     .withMessage("ticketsQuantity value must be a number greater than 0"),
 
   check("organizerId")
-    .notEmpty()
-    .withMessage("organizerId is required")
+    .optional()
     .isUUID()
     .withMessage("Invalid organizerId format")
-    .custom((value, { req }) => {
-      const user = Prisma.user.findUnique({ where: { id: value } });
+    .custom(async (value, { req }) => {
+      const user = await Prisma.user.findUnique({ where: { id: value } });
       if (!user) {
         throw new ApiError(`user not found with id: ${value}`, 404);
       }
+
+      if (user.role === "USER") {
+        throw new ApiError(
+          `organizerId dosen't belong to admin or organizer`,
+          401
+        );
+      }
+
       return true;
     }),
 
@@ -115,8 +120,10 @@ export const createEventValidator = [
     .withMessage("categoryId is required")
     .isUUID()
     .withMessage("Invalid categoryId format")
-    .custom((value, { req }) => {
-      const category = Prisma.category.findUnique({ where: { id: value } });
+    .custom(async (value, { req }) => {
+      const category = await Prisma.category.findUnique({
+        where: { id: value },
+      });
       if (!category) {
         throw new ApiError(`category not found with id: ${value}`, 404);
       }
@@ -189,34 +196,21 @@ export const updateEventValidator = [
   check("date")
     .optional()
     .isISO8601()
-    .withMessage("Date must be in a valid ISO 8601 format (e.g., YYYY-MM-DD)")
-    .custom((value, { req }) => {
-      req.body.date = new Date(value).toISOString();
-    }),
+    .withMessage("Date must be in a valid ISO 8601 format (e.g., YYYY-MM-DD)"),
 
   check("ticketsQuantity")
     .optional()
     .isInt({ min: 1 })
     .withMessage("ticketsQuantity value must be a number greater than 0"),
 
-  check("organizerId")
-    .optional()
-    .isUUID()
-    .withMessage("Invalid organizerId format")
-    .custom((value, { req }) => {
-      const user = Prisma.user.findUnique({ where: { id: value } });
-      if (!user) {
-        throw new ApiError(`user not found with id: ${value}`, 404);
-      }
-      return true;
-    }),
-
   check("categoryId")
     .optional()
     .isUUID()
     .withMessage("Invalid categoryId format")
-    .custom((value, { req }) => {
-      const category = Prisma.category.findUnique({ where: { id: value } });
+    .custom(async (value, { req }) => {
+      const category = await Prisma.category.findUnique({
+        where: { id: value },
+      });
       if (!category) {
         throw new ApiError(`category not found with id: ${value}`, 404);
       }

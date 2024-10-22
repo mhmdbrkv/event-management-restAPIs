@@ -2,6 +2,7 @@ import ApiError from "../Utils/apiError.js";
 import { PrismaClient, Event } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import ApiFeatures from "../Utils/apiFeatures.js";
+import { scheduleEmailBeforeDate } from "../Utils/scheduleNotifications.js";
 const Event = new PrismaClient().event;
 
 export const getAllEvents = async (
@@ -59,9 +60,40 @@ export const createEvent = async (
   next: NextFunction
 ) => {
   try {
+    // Convert the date to ISO format and assign it to req.body
+    req.body.date = new Date(req.body.date).toISOString();
+
+    // Dynamicly setting organizer for the new event
+    req.body.organizerId = req.body.organizerId
+      ? req.body.organizerId
+      : req.user?.email;
+
     const newEvent = await Event.create({
       data: req.body as Event,
     });
+
+    const organizer = await new PrismaClient().user.findUnique({
+      where: { id: req.body.organizerId },
+    });
+
+    if (newEvent && organizer) {
+      try {
+        scheduleEmailBeforeDate(
+          req.body.date,
+          organizer?.email,
+          `Reminder: Upcoming Event - ${req.body.title}`,
+          `Your event "${
+            req.body.title
+          }" is coming up on ${req.body.date.toLocaleString()}.`,
+          1
+        );
+      } catch (error) {
+        console.error("Error sending email", error);
+        // remove the created event when error occured with scheduleEmailBeforeDate
+        await Event.delete({ where: { id: newEvent.id } });
+        return next(new ApiError("Error sending email", 500));
+      }
+    }
 
     res.status(201).json({
       status: "success",
@@ -106,6 +138,10 @@ export const updateEvent = async (
 ) => {
   try {
     const { id } = req.params;
+    // Convert the date to ISO format and assign it to req.body
+    if (req.body.date) {
+      req.body.date = new Date(req.body.date).toISOString();
+    }
 
     const updatedEvent = await Event.update({
       where: { id },

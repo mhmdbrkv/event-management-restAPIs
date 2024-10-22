@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { stripe } from "../Utils/stripe.js";
 import ApiError from "./../Utils/apiError.js";
 import sendEmail from "../Utils/sendEmail.js";
+import { scheduleEmailBeforeDate } from "../Utils/scheduleNotifications.js";
 const Prisma = new PrismaClient();
 
 export const createCheckoutSession = async (
@@ -118,10 +119,25 @@ export const checkoutSuccess = async (
       return next(new ApiError("Error with adding user ticket", 500));
     }
 
-    const totalAmount = session.amount_total || 0;
+    // Schedule Sendding Email Before Date for Attendees
+    const event = await Prisma.event.findUnique({
+      where: { id: ticketUser.eventId },
+    });
+
+    if (event) {
+      scheduleEmailBeforeDate(
+        event.date,
+        attendedUser?.email,
+        `Reminder: Upcoming Event - ${event.title}`,
+        `Your event "${
+          event.title
+        }" is coming up on ${event.date.toLocaleString()}.`,
+        1
+      );
+    }
 
     // Email Options
-
+    const totalAmount = session.amount_total || 0;
     const options = {
       email: session.customer_email || "",
       subject: `Purchase Success`,
