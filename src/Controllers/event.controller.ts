@@ -66,7 +66,7 @@ export const createEvent = async (
     // Dynamicly setting organizer for the new event
     req.body.organizerId = req.body.organizerId
       ? req.body.organizerId
-      : req.user?.email;
+      : req.user?.id;
 
     const newEvent = await Event.create({
       data: req.body as Event,
@@ -89,9 +89,6 @@ export const createEvent = async (
         );
       } catch (error) {
         console.error("Error sending email", error);
-        // remove the created event when error occured with scheduleEmailBeforeDate
-        await Event.delete({ where: { id: newEvent.id } });
-        return next(new ApiError("Error sending email", 500));
       }
     }
 

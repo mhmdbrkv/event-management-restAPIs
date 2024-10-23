@@ -1,0 +1,74 @@
+
+🚀 Introducing My Node.js, TypeScript And Prisma Event Management REST APIs!
+
+
+
+الحمد لله رب العالمين.
+
+السلام عليكم. ازيكوا عاملين ايه
+
+كل المشاريع اللي عملها قبل كدة استخدمت فيها MongoDB ك داتا بيز ف حبيت اعمل حاجة استخدم فيها ال SQL.
+
+في المشروع بتاع النهاردة اختارت Prisma ك ORM وقولت اشتغل TypeScript.
+
+
+
+🔗 Project Overview:
+
+I’m excited to announce the completion of my latest project—an Event Management REST API built with Node.js, Express.js, TypeScript, and PostgreSQL. This API is designed to handle everything from user registrations to event creation, ticket bookings, and payment processing, all while ensuring top-notch security and performance.
+
+
+
+🛠️ Tech Stack & Features:
+
+- Backend: Node.js, Express.js
+
+- Language: TypeScript for type-safe and scalable code
+
+- Database: PostgreSQL with Prisma ORM for data modeling and migrations
+
+- Authentication: JWT for secure user authentication
+
+- Payment Integration: Stripe for seamless payment processing
+
+- Security: Implemented Helmet, CORS, HPP, and Express Rate Limiting for - protection against common web vulnerabilities
+
+- Task Scheduling: Node-Schedule for automated tasks like reminders
+
+- Caching: Redis for optimizing performance
+
+
+
+🌟 Key Features:
+
+- CRUD operations for events, users, and tickets
+
+- Pagination and advanced querying features
+
+- Reviews system for event feedback
+
+- API input validation and request logging for better debugging
+
+- Secure authentication and authorization
+
+- Robust error handling for seamless operation
+
+- Integrated payment system with Stripe
+
+- Automated email notifications using Nodemailer
+
+- Scheduled email notifications for upcoming events
+
+💡 Next Steps:
+I plan to enhance the project by implementing image uploading functionality and preparing for deployment to make the API accessible for real-world use. Looking forward to feedback and new opportunities to apply these skills!
+
+وبس كدة هذا وبالله التوفيق تحياتي
+
+🔗 Check out the code here: https://github.com/mhmdbrkv/event-management-restAPIs.git
+
+Let me know your thoughts or suggestions! 😊
+
+#Nodejs #TypeScript #EventManagement #RESTAPI #BackendDevelopment #Prisma #PostgreSQL #WebDevelopment #APIDevelopment #Stripe #Redis #Nodemailer #SecurityBestPractices #ProjectLaunch
+
+
+

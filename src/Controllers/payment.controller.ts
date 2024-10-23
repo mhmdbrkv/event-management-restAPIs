@@ -125,15 +125,19 @@ export const checkoutSuccess = async (
     });
 
     if (event) {
-      scheduleEmailBeforeDate(
-        event.date,
-        attendedUser?.email,
-        `Reminder: Upcoming Event - ${event.title}`,
-        `Your event "${
-          event.title
-        }" is coming up on ${event.date.toLocaleString()}.`,
-        1
-      );
+      try {
+        scheduleEmailBeforeDate(
+          event.date,
+          attendedUser?.email,
+          `Reminder: Upcoming Event - ${event.title}`,
+          `Your event "${
+            event.title
+          }" is coming up on ${event.date.toLocaleString()}.`,
+          1
+        );
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     // Email Options
@@ -145,7 +149,7 @@ export const checkoutSuccess = async (
         req.user?.username
       },\nWe sent this email to confirm you that your order has been succeed and you have paid ${
         totalAmount / 100
-      } with card.\n\nThe Baraka E-Commerce-Store family`,
+      } with card.\n\nThe Baraka Event Management App family`,
     };
 
     // Sending Email
